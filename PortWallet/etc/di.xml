@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="EonInfosys\PortWallet\Api\GuestPaymentInformationManagementProxyInterface"
+                type="EonInfosys\PortWallet\Model\GuestPaymentInformationManagementProxy" />
+    <preference for="EonInfosys\PortWallet\Api\IpnInterface"
+                type="EonInfosys\PortWallet\Model\IpnManagement"/>
+
+
+    <type name="Magento\Framework\Url\SecurityInfo">
+        <arguments>
+            <argument name="secureUrlList" xsi:type="array">
+                <item name="portwallet" xsi:type="string">/portwallet/</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="EonInfosys\PortWallet\Gateway\Request\HtmlRedirect\OrderDataBuilder">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+    <type name="EonInfosys\PortWallet\Gateway\Command\Form\BuildCommand">
+        <arguments>
+            <argument name="logger" xsi:type="object">PortWalletLogger</argument>
+        </arguments>
+    </type>
+    <type name="EonInfosys\PortWallet\Gateway\Command\ResponseCommand">
+        <arguments>
+            <argument name="commandPool" xsi:type="object">PortWalletCommandPool</argument>
+            <argument name="validator" xsi:type="object">PortWalletValidator</argument>
+            <argument name="logger" xsi:type="object">PortWalletLogger</argument>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="PortWalletFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="string">portwallet</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Transparent\Info</argument>
+            <argument name="infoBlockType" xsi:type="string">EonInfosys\PortWallet\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PortWalletValueHandlerPool</argument>
+            <argument  name="validatorPool" xsi:type="object">PortWalletValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PortWalletCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="initialize" xsi:type="string">EonInfosys\PortWallet\Gateway\Command\InitializeCommand</item>
+                <item name="accept_command" xsi:type="string">EonInfosys\PortWallet\Gateway\Command\Response\AcceptCommand</item>
+                <item name="cancel_command" xsi:type="string">EonInfosys\PortWallet\Gateway\Command\Response\CancelCommand</item>
+                <item name="capture" xsi:type="string">EonInfosys\PortWallet\Gateway\Command\CaptureCommand</item>
+                <!--<item name="refund" xsi:type="string">PortWalletRefundCommand</item>-->
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="string">portwallet</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletDefaultValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PortWalletDefaultValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PortWalletValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PortWalletCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="EonInfosys\PortWallet\Controller\HtmlRedirect\Response">
+        <arguments>
+            <argument name="command" xsi:type="object">EonInfosys\PortWallet\Gateway\Command\ResponseCommand</argument>
+        </arguments>
+    </type>
+    <virtualType name="PortWalletValidator" type="Magento\Payment\Gateway\Validator\ValidatorComposite">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="response" xsi:type="string">EonInfosys\PortWallet\Gateway\Validator\ResponseValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="EonInfosys\PortWallet\Gateway\Validator\ResponseValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+    <virtualType name="PortWalletLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </virtualType>
+
+   <!-- <type name="EonInfosys\PortWallet\Gateway\Command\CaptureCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">EonInfosys\PortWallet\Gateway\Request\RemoteAdmin\CaptureDataBuilder</argument>
+            <argument name="transferFactory" xsi:type="object">EonInfosys\PortWallet\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">PortWalletHttpClient</argument>
+            <argument name="validator" xsi:type="object">EonInfosys\PortWallet\Gateway\Validator\RemoteAdminValidator</argument>
+        </arguments>
+    </type>
+    <virtualType name="PortWalletRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">EonInfosys\PortWallet\Gateway\Request\RemoteAdmin\RefundDataBuilder</argument>
+            <argument name="transferFactory" xsi:type="object">EonInfosys\PortWallet\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">PortWalletHttpClient</argument>
+            <argument name="validator" xsi:type="object">EonInfosys\PortWallet\Gateway\Validator\RemoteAdminValidator</argument>
+        </arguments>
+    </virtualType>
+    <type name="EonInfosys\PortWallet\Gateway\Request\RemoteAdmin\RefundDataBuilder">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+    <type name="EonInfosys\PortWallet\Gateway\Request\RemoteAdmin\CaptureDataBuilder">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+    <type name="EonInfosys\PortWallet\Gateway\Http\TransferFactory">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>-->
+    <!--<virtualType name="PortWalletHttpClient" type="Magento\Payment\Gateway\Http\Client\Zend">
+        <arguments>
+            <argument name="logger" xsi:type="object">PortWalletLogger</argument>
+            <argument name="converter" xsi:type="object">EonInfosys\PortWallet\Gateway\Http\Converter\StringToMap</argument>
+        </arguments>
+    </virtualType>-->
+    <type name="EonInfosys\PortWallet\Gateway\Command\Response\AcceptCommand">
+        <arguments>
+            <argument name="validator" xsi:type="object">EonInfosys\PortWallet\Gateway\Validator\AcceptValidator</argument>
+            <argument name="handler" xsi:type="object">PortWalletAcceptHandler</argument>
+        </arguments>
+    </type>
+    <virtualType name="PortWalletAcceptHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="waf" xsi:type="string">EonInfosys\PortWallet\Gateway\Response\PaymentDetailsHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="EonInfosys\PortWallet\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">PortWalletConfig</argument>
+        </arguments>
+    </type>
+</config>
